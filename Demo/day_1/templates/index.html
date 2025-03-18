@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Identity Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .webcam-feed {
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .failure {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Verify Your Identity for the Exam</h1>
+        <p>Please position your face clearly in front of the camera and click the button below.</p>
+        <img src="{{ url_for('video_feed') }}" class="webcam-feed" width="640" height="480" alt="Webcam Feed">
+        <form id="verifyForm" method="post" action="/verify">
+            <button type="submit">Capture and Verify</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Handle form submission and display result
+        document.getElementById('verifyForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const response = await fetch('/verify', { method: 'POST' });
+            const resultText = await response.text();
+            const resultDiv = document.getElementById('result');
+            
+            // Display result with appropriate styling
+            if (resultText.includes("Verified")) {
+                resultDiv.textContent = resultText;
+                resultDiv.className = 'success';
+            } else {
+                resultDiv.textContent = resultText;
+                resultDiv.className = 'failure';
+            }
+        });
+    </script>
+</body>
+</html>
