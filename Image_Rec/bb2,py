@@ -1,0 +1,52 @@
+import cv2
+import torch
+from ultralytics import YOLO
+import numpy as np
+
+# Load YOLOv8 model
+model = YOLO("yolov8n.pt")  # Using the small YOLOv8 model
+
+# Preload reference image
+reference_image_path = "/home/azad/Documents/Code/AI/Image_Rec/basha.jpeg"  # Path to the reference image
+reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
+if reference_image is None:
+    print("Error: Reference image not found!")
+    exit()
+
+# Initialize ORB feature detector
+orb = cv2.ORB_create()
+keypoints_ref, descriptors_ref = orb.detectAndCompute(reference_image, None)
+
+# Start video capture
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    # Convert frame to grayscale
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # Detect ORB keypoints and descriptors in the frame
+    keypoints_frame, descriptors_frame = orb.detectAndCompute(gray_frame, None)
+    
+    if descriptors_frame is not None and descriptors_ref is not None:
+        # Match descriptors using BFMatcher
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        matches = bf.match(descriptors_ref, descriptors_frame)
+        matches = sorted(matches, key=lambda x: x.distance)
+        
+        # Define a match threshold
+        if len(matches) > 10:  # Adjust threshold as needed
+            cv2.putText(frame, "Image Detected!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    
+    # Display the video feed
+    cv2.imshow("YOLOv8 Object Detection", frame)
+    
+    # Break loop on 'q' key press
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
