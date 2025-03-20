@@ -20,6 +20,12 @@ for filename in os.listdir(KNOWN_FACES_DIR):
     else:
         print(f"No face found in {filename}, skipping...")
 
+# Use OpenCV CUDA if available
+USE_CUDA = cv2.cuda.getCudaEnabledDeviceCount() > 0
+
+if USE_CUDA:
+    print("Using GPU acceleration with OpenCV CUDA.")
+
 cap = cv2.VideoCapture(0)
 last_recognized_name = None  # Track last recognized face
 
@@ -28,12 +34,20 @@ while cap.isOpened():
     if not ret:
         break
 
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # Convert frame to CUDA (if GPU is available)
+    if USE_CUDA:
+        frame_gpu = cv2.cuda_GpuMat()
+        frame_gpu.upload(frame)
+        frame = frame_gpu.download()
 
-    face_locations = face_recognition.face_locations(rgb_frame,model="cnn")
+    # Resize frame to improve performance
+    small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+    rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+
+    face_locations = face_recognition.face_locations(rgb_frame, model="cnn")  # CNN uses GPU
     face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
-    current_recognized_name = None  # Track current frame's recognized face
+    current_recognized_name = None
 
     for face_encoding, face_location in zip(face_encodings, face_locations):
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
@@ -43,19 +57,18 @@ while cap.isOpened():
             match_index = matches.index(True)
             name = known_face_names[match_index]
 
-        # Print name only if it's different from the last recognized face
         if name != last_recognized_name:
             print(f"Match Found: {name}")
             last_recognized_name = name  # Update last recognized face
 
-        # Draw rectangle and name on the frame
-        top, right, bottom, left = face_location
+        # Scale back face location for original frame size
+        top, right, bottom, left = [v * 2 for v in face_location]
+
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
         cv2.putText(frame, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-        current_recognized_name = name  # Store the recognized name for this frame
+        current_recognized_name = name
 
-    # If no face is recognized, reset last_recognized_name to allow new detections
     if not face_encodings:
         last_recognized_name = None
 
@@ -66,3 +79,19 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
+
+# import cv2
+# USE_CUDA = cv2.cuda.getCudaEnabledDeviceCount() > 0
+# print("Starting...")
+
+# if USE_CUDA:
+#     print("Using GPU acceleration with OpenCV CUDA.")
+
+
+# import cv2
+# print(cv2.getBuildInformation())
+
+
+# import dlib
+# print("DLIB CUDA:", dlib.DLIB_USE_CUDA)
+
