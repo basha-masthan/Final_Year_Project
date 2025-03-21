@@ -8,7 +8,7 @@ KNOWN_FACES_DIR = r"C:\Users\basha\OneDrive\Documents\code\Final_Year_Project\Pr
 known_face_encodings = []
 known_face_names = []
 
-# Load known faces
+
 for filename in os.listdir(KNOWN_FACES_DIR):
     img_path = os.path.join(KNOWN_FACES_DIR, filename)
     image = face_recognition.load_image_file(img_path)
@@ -21,7 +21,7 @@ for filename in os.listdir(KNOWN_FACES_DIR):
         print(f"No face found in {filename}, skipping...")
 
 cap = cv2.VideoCapture(0)
-last_recognized_name = None  # Track last recognized face
+last_recognized_name = None  
 
 while cap.isOpened():
     ret, frame = cap.read()
@@ -33,7 +33,7 @@ while cap.isOpened():
     face_locations = face_recognition.face_locations(rgb_frame,model="cnn")
     face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
-    current_recognized_name = None  # Track current frame's recognized face
+    current_recognized_name = None  
 
     for face_encoding, face_location in zip(face_encodings, face_locations):
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
@@ -43,19 +43,19 @@ while cap.isOpened():
             match_index = matches.index(True)
             name = known_face_names[match_index]
 
-        # Print name only if it's different from the last recognized face
+        
         if name != last_recognized_name:
             print(f"Match Found: {name}")
-            last_recognized_name = name  # Update last recognized face
+            last_recognized_name = name  
 
-        # Draw rectangle and name on the frame
+        
         top, right, bottom, left = face_location
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
         cv2.putText(frame, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
         current_recognized_name = name  # Store the recognized name for this frame
 
-    # If no face is recognized, reset last_recognized_name to allow new detections
+    #
     if not face_encodings:
         last_recognized_name = None
 

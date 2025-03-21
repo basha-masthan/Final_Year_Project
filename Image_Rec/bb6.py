@@ -1,9 +1,9 @@
 from insightface.app import FaceAnalysis
 import cv2
 
-# Initialize InsightFace with GPU
+
 app = FaceAnalysis(providers=['CUDAExecutionProvider'])
-app.prepare(ctx_id=0, det_size=(640, 640))  # Use GPU (ctx_id=0)
+app.prepare(ctx_id=0, det_size=(640, 640))  
 
 cap = cv2.VideoCapture(0)
 
